@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart - Fashion Mart</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, Roboto, sans-serif; background: #f1f2f4; color: #212121; }
+        header { background: #2874f0; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #ffe500; text-decoration: none; font-weight: 700; font-size: 13px; }
+        
+        .container { padding: 10px; max-width: 600px; margin: 0 auto; }
+        .cart-card { background: white; border-radius: 4px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+        .cart-card img { width: 75px; height: 90px; object-fit: cover; border-radius: 3px; }
+        .cart-info { flex: 1; }
+        .cart-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .cart-price { font-size: 15px; font-weight: 700; color: #212121; }
+        .btn-remove { background: none; border: none; color: #d32f2f; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+        /* Total Bill Box */
+        .bill-box { background: white; border-radius: 4px; padding: 15px; margin-top: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+        .bill-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+        .bill-total { font-size: 16px; font-weight: 700; border-top: 1px dashed #ccc; padding-top: 8px; color: #2874f0; }
+        
+        .btn-checkout { background: #fb641b; color: white; border: none; padding: 14px; width: 100%; border-radius: 3px; font-size: 15px; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 15px; }
+
+        /* Modal */
+        .checkout-modal { display: none; position: fixed; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: flex-end; }
+        .checkout-sheet { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #878787; margin-bottom: 4px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .pay-options { display: flex; gap: 10px; margin: 15px 0; }
+        .pay-opt { flex: 1; border: 1px solid #ccc; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: 700; text-align: center; cursor: pointer; }
+        .pay-opt.active { border-color: #2874f0; background: #e8f0fe; color: #2874f0; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2 style="font-size: 17px; font-style: italic;">Fashion Mart Cart</h2>
+        <a href="/">&larr; Back to Shop</a>
+    </header>
+
+    <div class="container">
+        {% if cart_items %}
+            {% for item in cart_items %}
+            <div class="cart-card">
+                <img src="{{ item['image'] }}">
+                <div class="cart-info">
+                    <div class="cart-title">{{ item['name'] }}</div>
+                    <div class="cart-price">₹{{ item['price'] }}</div>
+                    <form action="/api/remove-from-cart/{{ loop.index0 }}" method="POST">
+                        <button type="submit" class="btn-remove">🗑️ REMOVE</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Price Summary -->
+            <div class="bill-box">
+                <div class="bill-row">
+                    <span>Items Total ({{ cart_items|length }})</span>
+                    <span>₹{{ total_amount }}</span>
+                </div>
+                <div class="bill-row">
+                    <span>Delivery Charges</span>
+                    <span style="color:#388e3c; font-weight:bold;">FREE</span>
+                </div>
+                <div class="bill-row bill-total">
+                    <span>Total Payable</span>
+                    <span>₹{{ total_amount }}</span>
+                </div>
+                <button class="btn-checkout" onclick="openCartCheckout()">Place Order (₹{{ total_amount }})</button>
+            </div>
+
+        {% else %}
+            <div style="text-align: center; padding: 60px 20px; color: #878787;">
+                <p style="font-size: 16px;">Aapki cart khali hai!</p>
+                <br>
+                <a href="/" style="background:#2874f0; color:white; padding:10px 20px; text-decoration:none; font-weight:bold; border-radius:3px;">Continue Shopping</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Checkout Modal for Cart -->
+    <div id="cartModal" class="checkout-modal">
+        <div class="checkout-sheet">
+            <h3 style="margin-bottom:12px; font-size:16px;">Delivery Details (Total: ₹{{ total_amount }})</h3>
+            <div class="form-group">
+                <label>Pura Naam</label>
+                <input type="text" id="cName" placeholder="Aapka Naam">
+            </div>
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="tel" id="cPhone" placeholder="10-digit phone">
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <textarea id="cAddr" rows="3" placeholder="Pura address"></textarea>
+            </div>
+
+            <div class="pay-options">
+                <div class="pay-opt active" id="cCOD" onclick="setCartPay('Cash on Delivery')">Cash On Delivery</div>
+                <div class="pay-opt" id="cUPI" onclick="setCartPay('Online / UPI')">UPI / Online</div>
+            </div>
+
+            <button class="btn-checkout" onclick="submitCartOrder()">Confirm & Order</button>
+            <button onclick="closeCartCheckout()" style="background:none; border:none; width:100%; margin-top:8px; color:#878787; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let cartMethod = 'Cash on Delivery';
+        function openCartCheckout() { document.getElementById('cartModal').style.display = 'flex'; }
+        function closeCartCheckout() { document.getElementById('cartModal').style.display = 'none'; }
+        function setCartPay(m) {
+            cartMethod = m;
+            document.getElementById('cCOD').classList.toggle('active', m === 'Cash on Delivery');
+            document.getElementById('cUPI').classList.toggle('active', m === 'Online / UPI');
+        }
+
+        function submitCartOrder() {
+            const name = document.getElementById('cName').value.trim();
+            const phone = document.getElementById('cPhone').value.trim();
+            const address = document.getElementById('cAddr').value.trim();
+            if (!name || !phone || !address) { alert("Details bharna zaroori hai!"); return; }
+
+            fetch('/api/order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name, phone, address,
+                    item: "Cart Items (Multiple)",
+                    price: "{{ total_amount }}",
+                    paymentMethod: cartMethod,
+                    from_cart: true
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Cart Order Placed Successfully! Order ID: " + data.orderId);
+                window.location.href = '/my-orders';
+            });
+        }
+    </script>
+</body>
+</html>

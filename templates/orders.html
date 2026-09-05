@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Fashion Mart</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, Roboto, sans-serif; background: #f1f2f4; color: #212121; }
+        
+        header { background: #2874f0; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+        header a { color: #ffe500; text-decoration: none; font-weight: 700; font-size: 13px; }
+
+        .container { padding: 10px; max-width: 600px; margin: 0 auto; }
+        .page-title { font-size: 16px; font-weight: 700; margin: 10px 0 14px 4px; }
+
+        /* Order Card */
+        .order-card { background: white; border-radius: 4px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+        .order-top { display: flex; justify-content: space-between; font-size: 12px; color: #878787; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px; }
+        .order-id { font-weight: 700; color: #212121; }
+
+        .item-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+        .item-name { font-size: 15px; font-weight: 600; color: #212121; }
+        .price { font-size: 15px; font-weight: 700; color: #212121; }
+        
+        .pay-tag { display: inline-block; font-size: 11px; background: #e8f0fe; color: #1967d2; padding: 2px 6px; border-radius: 2px; font-weight: 600; margin-bottom: 12px; }
+
+        /* Flipkart-Style Tracking Bar */
+        .tracker-wrap { margin: 15px 0 10px; padding: 0 10px; }
+        .steps { display: flex; justify-content: space-between; position: relative; }
+        .steps::before { content: ''; position: absolute; top: 7px; left: 15px; right: 15px; height: 3px; background: #e0e0e0; z-index: 1; }
+        .step { position: relative; z-index: 2; text-align: center; width: 33.33%; font-size: 11px; font-weight: 600; color: #878787; }
+        .dot { width: 16px; height: 16px; background: #bbb; border-radius: 50%; margin: 0 auto 5px; border: 2px solid white; }
+        
+        /* Active Status Colors */
+        .step.done .dot { background: #388e3c; }
+        .step.done { color: #388e3c; }
+
+        .address-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e0e0e0; font-size: 12px; color: #666; line-height: 18px; }
+        .empty-box { text-align: center; padding: 60px 20px; color: #878787; }
+        .btn-shop { display: inline-block; margin-top: 15px; background: #2874f0; color: white; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 700; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2 style="font-size: 17px; font-style: italic;">Fashion Mart</h2>
+        <a href="/">&larr; Back to Shop</a>
+    </header>
+
+    <div class="container">
+        <div class="page-title">Aapke Orders</div>
+
+        {% if orders %}
+            {% for o in orders %}
+            <div class="order-card">
+                <div class="order-top">
+                    <span class="order-id">{{ o['order_id'] }}</span>
+                    <span>{{ o['date'] }}</span>
+                </div>
+
+                <div class="item-row">
+                    <div class="item-name">{{ o['item_name'] }}</div>
+                    <div class="price">₹{{ o['price'] }}</div>
+                </div>
+                <div class="pay-tag">{{ o['payment_method'] }}</div>
+
+                <!-- Flipkart Tracker Bar -->
+                <div class="tracker-wrap">
+                    <div class="steps">
+                        <!-- Pending Step -->
+                        <div class="step done">
+                            <div class="dot"></div>
+                            Ordered
+                        </div>
+
+                        <!-- Shipped Step -->
+                        <div class="step {% if o['status'] == 'Shipped' or o['status'] == 'Delivered' %}done{% endif %}">
+                            <div class="dot"></div>
+                            Shipped 🚚
+                        </div>
+
+                        <!-- Delivered Step -->
+                        <div class="step {% if o['status'] == 'Delivered' %}done{% endif %}">
+                            <div class="dot"></div>
+                            Delivered ✅
+                        </div>
+                    </div>
+                </div>
+
+                <div class="address-box">
+                    <strong>Delivery Details:</strong><br>
+                    {{ o['customer_name'] }} | Mob: {{ o['phone'] }}<br>
+                    {{ o['address'] }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-box">
+                <p style="font-size: 15px;">Aapne abhi tak koi order nahi kiya hai.</p>
+                <a href="/" class="btn-shop">Shop Now</a>
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
