@@ -9,8 +9,8 @@
         body { font-family: -apple-system, Roboto, sans-serif; background: #f1f3f6; color: #212121; }
         header { background: #2874f0; color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
         .btn-top { color: white; text-decoration: none; font-size: 13px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 3px; }
-        .nav-tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; }
-        .tab-btn { flex: 1; padding: 14px 5px; text-align: center; border: none; background: none; font-weight: 700; font-size: 13px; cursor: pointer; color: #717478; }
+        .nav-tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; overflow-x: auto; scrollbar-width: none; }
+        .tab-btn { flex: 1; padding: 14px 10px; min-width: 100px; text-align: center; border: none; background: none; font-weight: 700; font-size: 12px; cursor: pointer; color: #717478; white-space: nowrap; }
         .tab-btn.active { color: #2874f0; border-bottom: 3px solid #2874f0; }
         .container { padding: 15px; max-width: 800px; margin: 0 auto; }
         .section { display: none; }
@@ -19,6 +19,8 @@
         label { font-size: 12px; font-weight: bold; color: #666; margin-top: 10px; display: block; }
         input, select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
         .btn-submit { background: #fb641b; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; border-radius: 3px; cursor: pointer; margin-top: 15px; }
+        .cat-item-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .cat-item-row img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
         .product-card { display: flex; gap: 12px; background: white; padding: 12px; border-radius: 4px; margin-bottom: 10px; align-items: center; }
         .product-card img { width: 65px; height: 80px; object-fit: cover; }
     </style>
@@ -43,27 +45,62 @@
             </div>
         </header>
 
+        <!-- 4 Tabs -->
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab(0)">1. Add Product</button>
-            <button class="tab-btn" onclick="switchTab(1)">2. Products ({{ products|length }})</button>
-            <button class="tab-btn" onclick="switchTab(2)">3. Orders ({{ orders|length }})</button>
+            <button class="tab-btn active" onclick="switchTab(0)">1. Categories</button>
+            <button class="tab-btn" onclick="switchTab(1)">2. Add Product</button>
+            <button class="tab-btn" onclick="switchTab(2)">3. Products ({{ products|length }})</button>
+            <button class="tab-btn" onclick="switchTab(3)">4. Orders ({{ orders|length }})</button>
         </div>
 
         <div class="container">
-            <!-- TAB 1: ADD PRODUCT -->
+            <!-- TAB 1: CATEGORIES -->
             <div class="section active">
+                <div class="box">
+                    <h3 style="font-size:15px; margin-bottom:8px;">Nayi Category Banayein</h3>
+                    <form action="/api/add-category" method="POST" enctype="multipart/form-data">
+                        <label>Category Ka Naam:</label>
+                        <input type="text" name="name" placeholder="Jaise: Kurti, Shoes, Watch, Jeans" required>
+                        <label>Category Ki Photo (Circle Icon):</label>
+                        <input type="file" name="cat_image" accept="image/*" required>
+                        <button type="submit" class="btn-submit" style="background:#2874f0;">Create Category</button>
+                    </form>
+                </div>
+
+                <div class="box">
+                    <h4 style="font-size:14px; margin-bottom:10px;">Current Categories</h4>
+                    {% for c in categories %}
+                    <div class="cat-item-row">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <img src="{{ c['image_url'] or '/static/default_cat.png' }}">
+                            <strong>{{ c['name'] }}</strong>
+                        </div>
+                        <form action="/api/delete-category/{{ c['id'] }}" method="POST" onsubmit="return confirm('Pakka delete karna hai?');">
+                            <button type="submit" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">🗑️ Delete</button>
+                        </form>
+                    </div>
+                    {% else %}
+                        <p style="color:#888; font-size:13px;">Abhi koi category nahi banayi hai. Pehle banayein!</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- TAB 2: ADD PRODUCT -->
+            <div class="section">
                 <div class="box">
                     <h3 style="font-size:15px; margin-bottom:10px;">Naya Product Add Karein</h3>
                     <form action="/api/add-product" method="POST" enctype="multipart/form-data">
                         <label>Category Chunein:</label>
                         <select name="category" required>
-                            <option value="Clothes">Clothes (Kapde)</option>
-                            <option value="Shoes">Shoes (Joote)</option>
-                            <option value="Watches">Watches (Ghadi)</option>
+                            {% for c in categories %}
+                                <option value="{{ c['name'] }}">{{ c['name'] }}</option>
+                            {% else %}
+                                <option disabled selected>Pehle Tab 1 se Category banayein</option>
+                            {% endfor %}
                         </select>
 
                         <label>Product Title / Naam</label>
-                        <input type="text" name="name" placeholder="e.g. Running Sports Shoes" required>
+                        <input type="text" name="name" placeholder="e.g. Sports Running Shoes" required>
                         <label>MRP (Original Price)</label>
                         <input type="number" name="mrp" placeholder="e.g. 1999" required>
                         <label>Selling Price (Offer Rate)</label>
@@ -77,7 +114,7 @@
                 </div>
             </div>
 
-            <!-- TAB 2: MANAGE / DELETE -->
+            <!-- TAB 3: PRODUCTS -->
             <div class="section">
                 {% for p in products %}
                 <div class="box product-card">
@@ -93,7 +130,7 @@
                 {% endfor %}
             </div>
 
-            <!-- TAB 3: ORDERS -->
+            <!-- TAB 4: ORDERS -->
             <div class="section">
                 {% for o in orders %}
                 <div class="box">
@@ -133,3 +170,4 @@
     {% endif %}
 </body>
 </html>
+
