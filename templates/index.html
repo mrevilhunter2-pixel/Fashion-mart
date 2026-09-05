@@ -11,12 +11,13 @@
         header h1 { font-size: 18px; font-weight: 800; font-style: italic; }
         .btn-top { color: #212121; background: #ffe500; padding: 6px 10px; border-radius: 2px; font-weight: 700; text-decoration: none; font-size: 12px; }
 
-        /* Shoopy-Style Top Circular Category Slider */
+        /* Dynamic Category Circles */
         .category-bar { display: flex; overflow-x: auto; gap: 14px; padding: 12px 10px; background: white; border-bottom: 1px solid #e0e0e0; scrollbar-width: none; }
         .category-bar::-webkit-scrollbar { display: none; }
-        .cat-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #555; font-size: 11px; font-weight: 600; min-width: 60px; }
-        .cat-circle { width: 52px; height: 52px; border-radius: 50%; background: #f1f3f6; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid transparent; margin-bottom: 4px; }
-        .cat-item.active .cat-circle { border-color: #2874f0; background: #e8f0fe; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #555; font-size: 11px; font-weight: 600; min-width: 62px; }
+        .cat-circle { width: 56px; height: 56px; border-radius: 50%; background: #f1f3f6; display: flex; align-items: center; justify-content: center; border: 2px solid transparent; margin-bottom: 5px; overflow: hidden; }
+        .cat-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .cat-item.active .cat-circle { border-color: #2874f0; box-shadow: 0 0 0 1px #2874f0; }
         .cat-item.active { color: #2874f0; font-weight: 700; }
 
         /* Product Grid */
@@ -34,7 +35,7 @@
         .btn-cart-add { flex: 1; background: #ff9f00; color: white; border: none; padding: 7px 2px; font-weight: 700; font-size: 11px; border-radius: 2px; cursor: pointer; }
         .btn-buy { flex: 1; background: #fb641b; color: white; border: none; padding: 7px 2px; font-weight: 700; font-size: 11px; border-radius: 2px; cursor: pointer; }
 
-        /* Multi-Image Preview Modal */
+        /* Multi-Image Modal */
         .gallery-modal { display: none; position: fixed; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; }
         .gallery-main-img { max-width: 90%; max-height: 60vh; border-radius: 6px; object-fit: contain; }
         .thumb-row { display: flex; gap: 10px; margin-top: 15px; }
@@ -42,7 +43,7 @@
         .thumb-img.active { border-color: #ffe500; }
         .close-gallery { position: absolute; top: 15px; right: 20px; font-size: 32px; color: white; cursor: pointer; }
 
-        /* Checkout Sheet */
+        /* Checkout Modal */
         .checkout-modal { display: none; position: fixed; z-index: 101; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: flex-end; }
         .checkout-sheet { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
         .form-group { margin-bottom: 12px; }
@@ -64,32 +65,27 @@
         </div>
     </header>
 
-    <!-- Categories Filter Bar -->
+    <!-- Dynamic Categories Filter Bar -->
     <div class="category-bar">
         <a href="/?cat=All" class="cat-item {% if selected_cat == 'All' %}active{% endif %}">
-            <div class="cat-circle">🛍️</div>
+            <div class="cat-circle" style="background:#e8f0fe; font-size:24px;">🛍️</div>
             <span>All</span>
         </a>
-        <a href="/?cat=Clothes" class="cat-item {% if selected_cat == 'Clothes' %}active{% endif %}">
-            <div class="cat-circle">👗</div>
-            <span>Clothes</span>
+        {% for c in categories %}
+        <a href="/?cat={{ c['name'] }}" class="cat-item {% if selected_cat == c['name'] %}active{% endif %}">
+            <div class="cat-circle">
+                <img src="{{ c['image_url'] or '/static/default_cat.png' }}" alt="{{ c['name'] }}">
+            </div>
+            <span>{{ c['name'] }}</span>
         </a>
-        <a href="/?cat=Shoes" class="cat-item {% if selected_cat == 'Shoes' %}active{% endif %}">
-            <div class="cat-circle">👟</div>
-            <span>Shoes</span>
-        </a>
-        <a href="/?cat=Watches" class="cat-item {% if selected_cat == 'Watches' %}active{% endif %}">
-            <div class="cat-circle">⌚</div>
-            <span>Watches</span>
-        </a>
+        {% endfor %}
     </div>
 
-    <!-- Products List -->
+    <!-- Products Grid -->
     <div class="container">
         <div class="product-grid">
             {% for p in products %}
             <div class="card">
-                <!-- Tap karne par multiple images ka slider open hoga -->
                 <img src="{{ p['main_img'] }}" alt="{{ p['name'] }}" onclick='openGallery({{ p["img_list"]|tojson }})'>
                 <div class="card-body">
                     <div class="card-title">{{ p['name'] }}</div>
@@ -107,7 +103,7 @@
                 </div>
             </div>
             {% else %}
-                <p style="grid-column: 1/-1; text-align:center; padding: 40px; color:#888;">Is category mein abhi koi item nahi hai.</p>
+                <p style="grid-column: 1/-1; text-align:center; padding: 40px; color:#888;">Is category mein koi product nahi hai.</p>
             {% endfor %}
         </div>
     </div>
@@ -119,7 +115,7 @@
         <div class="thumb-row" id="thumbContainer"></div>
     </div>
 
-    <!-- Direct Checkout Bottom Sheet -->
+    <!-- Checkout Modal -->
     <div id="checkoutModal" class="checkout-modal">
         <div class="checkout-sheet">
             <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
@@ -167,10 +163,8 @@
                 };
                 thumbBox.appendChild(thumb);
             });
-
             document.getElementById('galleryModal').style.display = 'flex';
         }
-
         function closeGallery() { document.getElementById('galleryModal').style.display = 'none'; }
 
         function addToCart(id, name, price, image) {
@@ -218,4 +212,5 @@
         }
     </script>
 </body>
-</html>
+    </html>
+    
