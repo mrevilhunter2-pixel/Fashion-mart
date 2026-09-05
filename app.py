@@ -5,6 +5,9 @@ from werkzeug.utils import secure_filename
 
 # Database Selection: Render par Supabase PostgreSQL, Local me SQLite
 DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.strip()
+    
 
 if DATABASE_URL:
     import psycopg2
