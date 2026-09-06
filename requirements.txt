@@ -2,4 +2,4 @@ flask
 gunicorn
 werkzeug
 psycopg2-binary
-
+cloudinary
