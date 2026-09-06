@@ -12,12 +12,10 @@ cloudinary.config(
     api_secret = os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-
 # Database Selection: Render par Supabase PostgreSQL, Local me SQLite
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     DATABASE_URL = DATABASE_URL.strip()
-    
 
 if DATABASE_URL:
     import psycopg2
@@ -46,7 +44,6 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
     
-    # Categories Table
     if is_postgres:
         cur.execute('''CREATE TABLE IF NOT EXISTS categories (
             id SERIAL PRIMARY KEY,
@@ -115,11 +112,9 @@ def home():
     conn = get_db()
     cur = conn.cursor()
     
-    # Categories fetch
     cur.execute('SELECT * FROM categories ORDER BY id ASC')
     categories = cur.fetchall()
     
-    # Products filter
     if cat == 'All':
         cur.execute('SELECT * FROM products ORDER BY id DESC')
     else:
@@ -138,55 +133,48 @@ def home():
     cart_count = len(session.get('cart', []))
     return render_template('index.html', products=prod_list, categories=categories, selected_cat=cat, cart_count=cart_count)
 
-# --- ADMIN ROUTES ---
+# --- ADMIN PANEL ROUTES ---
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    error = None
     if request.method == 'POST':
         if request.form.get('password') == ADMIN_PASSWORD:
-            session['is_admin'] = True
+            session['admin_logged_in'] = True
             return redirect('/admin')
-        error = "Galat Password!"
+        return render_template('admin.html', error='Galat Password!')
 
-    if not session.get('is_admin'):
-        return render_template('admin.html', logged_in=False, error=error)
+    if not session.get('admin_logged_in'):
+        return render_template('admin.html', login_required=True)
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM categories ORDER BY id DESC')
-    categories = cur.fetchall()
     cur.execute('SELECT * FROM products ORDER BY id DESC')
     products = cur.fetchall()
+    cur.execute('SELECT * FROM categories ORDER BY id ASC')
+    categories = cur.fetchall()
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
     orders = cur.fetchall()
     conn.close()
 
-    prod_list = []
-    for p in products:
-        d = dict(p)
-        imgs = [i for i in (d.get('images') or '').split(',') if i]
-        d['main_img'] = imgs[0] if imgs else ''
-        prod_list.append(d)
-
-    return render_template('admin.html', logged_in=True, categories=categories, products=prod_list, orders=orders)
+    return render_template('admin.html', products=products, categories=categories, orders=orders)
 
 @app.route('/admin/logout')
 def admin_logout():
-    session.pop('is_admin', None)
-    return redirect('/')
+    session.pop('admin_logged_in', None)
+    return redirect('/admin')
 
-# Category Add API
-@app.route('/api/add-category', methods=['POST'])
+# Category Add (Cloudinary Enabled)
+@app.route('/admin/category/add', methods=['POST'])
 def add_category():
-    if not session.get('is_admin'): return "Unauthorized", 403
-    name = request.form.get('name', '').strip()
-    file = request.files.get('cat_image')
-    image_url = ''
+    if not session.get('admin_logged_in'):
+        return redirect('/admin')
+    
+    name = request.form.get('category_name')
+    file = request.files.get('category_image')
+    image_url = ""
 
     if file and file.filename != '':
-        filename = f"cat_{random.randint(1000, 9999)}_{secure_filename(file.filename)}"
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        image_url = f"/static/uploads/{filename}"
+        upload_res = cloudinary.uploader.upload(file)
+        image_url = upload_res.get('secure_url')
 
     if name:
         conn = get_db()
@@ -195,136 +183,82 @@ def add_category():
         try:
             cur.execute(f'INSERT INTO categories (name, image_url) VALUES ({placeholder})', (name, image_url))
             conn.commit()
-        except:
-            pass
+        except Exception:
+            conn.rollback()
         conn.close()
+        
     return redirect('/admin')
 
-# Category Delete API
-@app.route('/api/delete-category/<int:c_id>', methods=['POST'])
-def delete_category(c_id):
-    if not session.get('is_admin'): return "Unauthorized", 403
+# Category Delete
+@app.route('/admin/category/delete/<int:cat_id>')
+def delete_category(cat_id):
+    if not session.get('admin_logged_in'):
+        return redirect('/admin')
     conn = get_db()
     cur = conn.cursor()
     placeholder = '%s' if is_postgres else '?'
-    cur.execute(f'DELETE FROM categories WHERE id = {placeholder}', (c_id,))
+    cur.execute(f'DELETE FROM categories WHERE id = {placeholder}', (cat_id,))
     conn.commit()
     conn.close()
     return redirect('/admin')
 
-# Product Upload API
-@app.route('/api/add-product', methods=['POST'])
+# Product Add (Cloudinary Enabled)
+@app.route('/admin/product/add', methods=['POST'])
 def add_product():
-    if not session.get('is_admin'): return "Unauthorized", 403
+    if not session.get('admin_logged_in'):
+        return redirect('/admin')
+
     name = request.form.get('name')
     category = request.form.get('category')
     mrp = int(request.form.get('mrp', 0))
     price = int(request.form.get('price', 0))
-    discount = int(((mrp - price) / mrp) * 100) if mrp > price else 0
+    discount = int(((mrp - price) / mrp * 100)) if mrp > price else 0
 
-    files = request.files.getlist('product_images')
-    saved_images = []
-    for f in files[:4]:
+    uploaded_files = request.files.getlist('images')
+    images = []
+    for f in uploaded_files[:4]:
         if f and f.filename != '':
-            filename = f"prod_{random.randint(1000, 9999)}_{secure_filename(f.filename)}"
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            saved_images.append(f"/static/uploads/{filename}")
-
-    images_str = ",".join(saved_images)
+            upload_res = cloudinary.uploader.upload(f)
+            images.append(upload_res.get('secure_url'))
+            
+    images_str = ','.join(images)
 
     conn = get_db()
     cur = conn.cursor()
     placeholder = '%s, %s, %s, %s, %s, %s' if is_postgres else '?, ?, ?, ?, ?, ?'
-    cur.execute(f'INSERT INTO products (name, category, mrp, price, discount, images) VALUES ({placeholder})',
-                (name, category, mrp, price, discount, images_str))
+    cur.execute(f'''INSERT INTO products (name, category, mrp, price, discount, images)
+                    VALUES ({placeholder})''', (name, category, mrp, price, discount, images_str))
     conn.commit()
     conn.close()
     return redirect('/admin')
 
-# Product Delete API
-@app.route('/api/delete-product/<int:p_id>', methods=['POST'])
-def delete_product(p_id):
-    if not session.get('is_admin'): return "Unauthorized", 403
+# Product Delete
+@app.route('/admin/product/delete/<int:prod_id>')
+def delete_product(prod_id):
+    if not session.get('admin_logged_in'):
+        return redirect('/admin')
     conn = get_db()
     cur = conn.cursor()
     placeholder = '%s' if is_postgres else '?'
-    cur.execute(f'DELETE FROM products WHERE id = {placeholder}', (p_id,))
+    cur.execute(f'DELETE FROM products WHERE id = {placeholder}', (prod_id,))
     conn.commit()
     conn.close()
     return redirect('/admin')
 
-# Cart & Orders Routes
-@app.route('/cart')
-def cart():
-    cart_items = session.get('cart', [])
-    total_amount = sum(item['price'] for item in cart_items)
-    return render_template('cart.html', cart_items=cart_items, total_amount=total_amount)
-
-@app.route('/api/add-to-cart', methods=['POST'])
-def add_to_cart():
-    if 'cart' not in session: session['cart'] = []
-    data = request.json
-    cart = session['cart']
-    cart.append({'id': data['id'], 'name': data['name'], 'price': int(data['price']), 'image': data['image']})
-    session['cart'] = cart
-    session.modified = True
-    return jsonify({"success": True, "cart_count": len(session['cart'])})
-
-@app.route('/api/remove-from-cart/<int:index>', methods=['POST'])
-def remove_from_cart(index):
-    cart = session.get('cart', [])
-    if 0 <= index < len(cart):
-        cart.pop(index)
-        session['cart'] = cart
-        session.modified = True
-    return redirect('/cart')
-
-@app.route('/api/order', methods=['POST'])
-def place_order():
-    if 'user_id' not in session: session['user_id'] = os.urandom(8).hex()
-    data = request.json
-    order_id = f"OD{random.randint(10000000, 99999999)}"
-
-    conn = get_db()
-    cur = conn.cursor()
-    placeholder = '%s, %s, %s, %s, %s, %s, %s, %s' if is_postgres else '?, ?, ?, ?, ?, ?, ?, ?'
-    cur.execute(f'''INSERT INTO orders 
-        (order_id, user_id, customer_name, phone, address, item_name, price, payment_method) 
-        VALUES ({placeholder})''',
-        (order_id, session['user_id'], data['name'], data['phone'], data['address'], data['item'], int(data['price']), data['paymentMethod']))
-    conn.commit()
-    conn.close()
-
-    if data.get('from_cart'):
-        session['cart'] = []
-        session.modified = True
-    return jsonify({"success": True, "orderId": order_id})
-
-@app.route('/my-orders')
-def my_orders():
-    user_id = session.get('user_id')
-    orders = []
-    if user_id:
-        conn = get_db()
-        cur = conn.cursor()
-        placeholder = '%s' if is_postgres else '?'
-        cur.execute(f'SELECT * FROM orders WHERE user_id = {placeholder} ORDER BY id DESC', (user_id,))
-        orders = cur.fetchall()
-        conn.close()
-    return render_template('orders.html', orders=orders)
-
-@app.route('/api/update-status', methods=['POST'])
-def update_status():
-    if not session.get('is_admin'): return jsonify({"error": "Unauthorized"}), 403
-    data = request.json
+# Order Status Update
+@app.route('/admin/order/update/<int:order_id>', methods=['POST'])
+def update_order(order_id):
+    if not session.get('admin_logged_in'):
+        return redirect('/admin')
+    new_status = request.form.get('status')
     conn = get_db()
     cur = conn.cursor()
     placeholder = '%s, %s' if is_postgres else '?, ?'
-    cur.execute(f'UPDATE orders SET status = {placeholder.split(",")[0]} WHERE order_id = {placeholder.split(",")[1]}', 
-                (data['status'], data['orderId']))
+    cur.execute(f'UPDATE orders SET status = {placeholder.split(",")[0]} WHERE id = {placeholder.split(",")[1]}', (new_status, order_id))
     conn.commit()
     conn.close()
-    return jsonify({"success": True})
+    return redirect('/admin')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True)
+        
