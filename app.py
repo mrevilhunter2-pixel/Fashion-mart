@@ -34,7 +34,7 @@ else:
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = 'fashion_secret_key_123'
-ADMIN_PASSWORD = 'admin123'
+ADMIN_PASSWORD = 'ganesh1234me'
 
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
