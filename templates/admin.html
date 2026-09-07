@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+     <!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
@@ -27,12 +27,13 @@
 </head>
 <body>
 
-    {% if not logged_in %}
+    <!-- Sahi Login Check -->
+    {% if not session.admin_logged_in %}
         <div style="max-width: 320px; margin: 80px auto; background: white; padding: 24px; border-radius: 4px;">
             <h2 style="font-size: 18px; margin-bottom: 15px; text-align: center;">Seller Hub Login</h2>
             {% if error %}<p style="color:red; font-size:13px;">{{ error }}</p>{% endif %}
             <form action="/admin" method="POST">
-                <input type="password" name="password" placeholder="Admin Password dalein" required>
+                <input type="password" name="password" placeholder="Admin Password dalein (admin123)" required>
                 <button type="submit" class="btn-submit">Login</button>
             </form>
         </div>
@@ -45,7 +46,6 @@
             </div>
         </header>
 
-        <!-- 4 Tabs -->
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab(0)">1. Categories</button>
             <button class="tab-btn" onclick="switchTab(1)">2. Add Product</button>
@@ -58,11 +58,12 @@
             <div class="section active">
                 <div class="box">
                     <h3 style="font-size:15px; margin-bottom:8px;">Nayi Category Banayein</h3>
-                    <form action="/api/add-category" method="POST" enctype="multipart/form-data">
+                    <!-- Fix: Correct Route and Names -->
+                    <form action="/admin/category/add" method="POST" enctype="multipart/form-data">
                         <label>Category Ka Naam:</label>
-                        <input type="text" name="name" placeholder="Jaise: Kurti, Shoes, Watch, Jeans" required>
+                        <input type="text" name="category_name" placeholder="Jaise: Kurti, Shoes, Watch, Jeans" required>
                         <label>Category Ki Photo (Circle Icon):</label>
-                        <input type="file" name="cat_image" accept="image/*" required>
+                        <input type="file" name="category_image" accept="image/*" required>
                         <button type="submit" class="btn-submit" style="background:#2874f0;">Create Category</button>
                     </form>
                 </div>
@@ -75,12 +76,12 @@
                             <img src="{{ c['image_url'] or '/static/default_cat.png' }}">
                             <strong>{{ c['name'] }}</strong>
                         </div>
-                        <form action="/api/delete-category/{{ c['id'] }}" method="POST" onsubmit="return confirm('Pakka delete karna hai?');">
+                        <form action="/admin/category/delete/{{ c['id'] }}" method="POST" onsubmit="return confirm('Pakka delete karna hai?');">
                             <button type="submit" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">🗑️ Delete</button>
                         </form>
                     </div>
                     {% else %}
-                        <p style="color:#888; font-size:13px;">Abhi koi category nahi banayi hai. Pehle banayein!</p>
+                        <p style="color:#888; font-size:13px;">Abhi koi category nahi banayi hai.</p>
                     {% endfor %}
                 </div>
             </div>
@@ -89,7 +90,8 @@
             <div class="section">
                 <div class="box">
                     <h3 style="font-size:15px; margin-bottom:10px;">Naya Product Add Karein</h3>
-                    <form action="/api/add-product" method="POST" enctype="multipart/form-data">
+                    <!-- Fix: Correct Route and Multiple Files Name -->
+                    <form action="/admin/product/add" method="POST" enctype="multipart/form-data">
                         <label>Category Chunein:</label>
                         <select name="category" required>
                             {% for c in categories %}
@@ -107,7 +109,7 @@
                         <input type="number" name="price" placeholder="e.g. 799" required>
 
                         <label>Gallery Se 1 se 4 Photos Select Karein (Multiple Select):</label>
-                        <input type="file" name="product_images" accept="image/*" multiple required>
+                        <input type="file" name="images" accept="image/*" multiple required>
 
                         <button type="submit" class="btn-submit">Upload Product</button>
                     </form>
@@ -122,7 +124,7 @@
                     <div style="flex:1;">
                         <strong>{{ p['name'] }}</strong> [{{ p['category'] }}]
                         <div>₹{{ p['price'] }} <del style="color:#888;">₹{{ p['mrp'] }}</del></div>
-                        <form action="/api/delete-product/{{ p['id'] }}" method="POST" onsubmit="return confirm('Delete karna hai?');">
+                        <form action="/admin/product/delete/{{ p['id'] }}" method="POST" onsubmit="return confirm('Delete karna hai?');">
                             <button type="submit" style="color:red; background:none; border:none; margin-top:6px; cursor:pointer; font-weight:bold;">🗑️ Delete</button>
                         </form>
                     </div>
@@ -141,7 +143,7 @@
                     <div style="margin: 6px 0;"><strong>{{ o['item_name'] }}</strong> - ₹{{ o['price'] }} ({{ o['payment_method'] }})</div>
                     <div style="font-size:12px; color:#555;">{{ o['customer_name'] }} | {{ o['phone'] }} | {{ o['address'] }}</div>
                     <div style="margin-top:10px;">
-                        <select onchange="updateStatus('{{ o['order_id'] }}', this.value)">
+                        <select onchange="updateStatus('{{ o['id'] }}', this.value)">
                             <option value="Pending" {% if o['status'] == 'Pending' %}selected{% endif %}>Pending</option>
                             <option value="Shipped" {% if o['status'] == 'Shipped' %}selected{% endif %}>Shipped 🚚</option>
                             <option value="Delivered" {% if o['status'] == 'Delivered' %}selected{% endif %}>Delivered ✅</option>
@@ -160,14 +162,15 @@
                 document.querySelectorAll('.section').forEach((s, i) => s.classList.toggle('active', i === index));
             }
             function updateStatus(orderId, status) {
-                fetch('/api/update-status', {
+                fetch('/admin/order/update/' + orderId, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ orderId, status })
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'status=' + encodeURIComponent(status)
                 }).then(() => alert("Status Updated: " + status));
             }
         </script>
     {% endif %}
 </body>
 </html>
-
+               
+                
