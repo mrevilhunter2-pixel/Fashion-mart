@@ -11,16 +11,6 @@
         header h1 { font-size: 18px; font-weight: 800; font-style: italic; }
         .btn-top { color: #212121; background: #ffe500; padding: 6px 10px; border-radius: 2px; font-weight: 700; text-decoration: none; font-size: 12px; }
 
-        /* Dynamic Category Circles */
-        .category-bar { display: flex; overflow-x: auto; gap: 14px; padding: 12px 10px; background: white; border-bottom: 1px solid #e0e0e0; scrollbar-width: none; }
-        .category-bar::-webkit-scrollbar { display: none; }
-        .cat-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #555; font-size: 11px; font-weight: 600; min-width: 62px; }
-        .cat-circle { width: 56px; height: 56px; border-radius: 50%; background: #f1f3f6; display: flex; align-items: center; justify-content: center; border: 2px solid transparent; margin-bottom: 5px; overflow: hidden; }
-        .cat-circle img { width: 100%; height: 100%; object-fit: cover; }
-        .cat-item.active .cat-circle { border-color: #2874f0; box-shadow: 0 0 0 1px #2874f0; }
-        .cat-item.active { color: #2874f0; font-weight: 700; }
-
-        /* Product Grid */
         .container { padding: 8px; }
         .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .card { background: white; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
@@ -35,70 +25,13 @@
         .btn-cart-add { flex: 1; background: #ff9f00; color: white; border: none; padding: 7px 2px; font-weight: 700; font-size: 11px; border-radius: 2px; cursor: pointer; }
         .btn-buy { flex: 1; background: #fb641b; color: white; border: none; padding: 7px 2px; font-weight: 700; font-size: 11px; border-radius: 2px; cursor: pointer; }
 
-        /* Multi-Image Modal */
-        .gallery-modal { display: none; position: fixed; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; }
-        .gallery-main-img { max-width: 90%; max-height: 60vh; border-radius: 6px; object-fit: contain; }
-        .thumb-row { display: flex; gap: 10px; margin-top: 15px; }
-        .thumb-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 2px solid #666; cursor: pointer; }
-        .thumb-img.active { border-color: #ffe500; }
-        .close-gallery { position: absolute; top: 15px; right: 20px; font-size: 32px; color: white; cursor: pointer; }
-
-        /* Checkout Modal */
-        .checkout-modal { display: none; position: fixed; z-index: 101; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: flex-end; }
-        .checkout-sheet { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #878787; margin-bottom: 4px; }
-        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #c2c2c2; border-radius: 4px; }
-        .pay-options { display: flex; gap: 10px; margin: 15px 0; }
-        .pay-opt { flex: 1; border: 1px solid #c2c2c2; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: 700; text-align: center; cursor: pointer; }
-        .pay-opt.active { border-color: #2874f0; background: #e8f0fe; color: #2874f0; }
-        .btn-confirm { background: #fb641b; color: white; width: 100%; padding: 12px; border: none; font-size: 15px; font-weight: 700; border-radius: 2px; cursor: pointer; }
-   /* Naya Category Grid Style */
-.section-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #212121;
-    padding: 20px 15px 10px 15px;
-    margin: 0;
-}
-
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 Columns */
-    gap: 15px;
-    padding: 0 15px 20px 15px;
-}
-
-.cat-box {
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    text-decoration: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid #f0f0f0;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s;
-}
-
-.cat-box:active {
-    transform: scale(0.97);
-}
-
-.cat-box img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-}
-
-.cat-name {
-    text-align: center;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-        }
-    
+        /* Naya Category Grid Style */
+        .section-title { font-size: 18px; font-weight: bold; color: #212121; padding: 20px 15px 10px 15px; margin: 0; }
+        .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 15px 20px 15px; }
+        .cat-box { background: #fff; border-radius: 12px; overflow: hidden; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; display: flex; flex-direction: column; transition: transform 0.2s; }
+        .cat-box:active { transform: scale(0.97); }
+        .cat-box img { width: 100%; height: 120px; object-fit: cover; }
+        .cat-name { text-align: center; padding: 10px; font-size: 14px; font-weight: 600; color: #333; }
     </style>
 </head>
 <body>
@@ -111,19 +44,15 @@
         </div>
     </header>
 
-        <!-- Browse Categories Grid -->
+    <!-- Browse Categories Grid -->
     <h3 class="section-title">Browse Categories</h3>
-
     <div class="category-grid">
-        <!-- 'All' Box -->
         <a href="/?cat=All" class="cat-box">
             <div style="height: 130px; background: #f4f6f8; display: flex; justify-content: center; align-items: center;">
                 <span style="font-size: 42px;">🛍️</span>
             </div>
             <div class="cat-name">All</div>
         </a>
-
-        <!-- Database Categories -->
         {% for c in categories %}
         <a href="/?cat={{ c['name'] }}" class="cat-box">
             <img src="{{ c['image_url'] or 'https://placehold.co/300x300?text=No+Image' }}" alt="{{ c['name'] }}">
@@ -132,14 +61,15 @@
         {% endfor %}
     </div>
     
-
     <!-- Products Grid -->
     <div class="container">
         <div class="product-grid">
             {% for p in products %}
             <div class="card">
+                
+                <!-- YAHAN LINK LAGA DIYA HAI TAJI PHOTO PAR CLICK KARNE SE PRODUCT PAGE KHULE -->
                 <a href="/product/{{ p['id'] }}" style="display: block;">
-    <img src="{{ p['main_img'] }}" alt="{{ p['name'] }}" style="width: 100%; height: 190px; object-fit: cover;">
+                    <img src="{{ p['main_img'] }}" alt="{{ p['name'] }}" style="width: 100%; height: 190px; object-fit: cover;">
                 </a>
                 
                 <div class="card-body">
@@ -152,8 +82,10 @@
                         {% endif %}
                     </div>
                     <div class="btn-row">
-                        <button class="btn-cart-add" onclick="addToCart('{{ p['id'] }}', '{{ p['name'] }}', '{{ p['price'] }}', '{{ p['main_img'] }}')">Add Cart</button>
-                        <button class="btn-buy" onclick="openCheckout('{{ p['name'] }}', '{{ p['price'] }}')">Buy Now</button>
+                        <button class="btn-cart-add" onclick="addToCart('{{ p['id'] }}')">Add Cart</button>
+                        <a href="/product/{{ p['id'] }}" style="flex:1; display:flex;">
+                            <button class="btn-buy" style="width:100%;">Buy Now</button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -163,67 +95,8 @@
         </div>
     </div>
 
-    <!-- Multi-Image Viewer Popup -->
-    <div id="galleryModal" class="gallery-modal">
-        <span class="close-gallery" onclick="closeGallery()">&times;</span>
-        <img id="galleryMain" class="gallery-main-img" src="">
-        <div class="thumb-row" id="thumbContainer"></div>
-    </div>
-
-    <!-- Checkout Modal -->
-    <div id="checkoutModal" class="checkout-modal">
-        <div class="checkout-sheet">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-                <h3 id="itemLabel" style="font-size:16px;">Delivery Details</h3>
-                <span onclick="closeCheckout()" style="font-size:24px; cursor:pointer;">&times;</span>
-            </div>
-            <div class="form-group">
-                <label>Pura Naam</label>
-                <input type="text" id="custName" placeholder="Aapka Naam">
-            </div>
-            <div class="form-group">
-                <label>Mobile Number</label>
-                <input type="tel" id="custPhone" placeholder="10-digit number">
-            </div>
-            <div class="form-group">
-                <label>Address</label>
-                <textarea id="custAddr" rows="3" placeholder="Pura Pata"></textarea>
-            </div>
-            <div class="pay-options">
-                <div class="pay-opt active" id="optCOD" onclick="selectPay('Cash on Delivery')">COD</div>
-                <div class="pay-opt" id="optUPI" onclick="selectPay('Online / UPI')">Online UPI</div>
-            </div>
-            <button class="btn-confirm" onclick="submitOrder()">Place Order</button>
-        </div>
-    </div>
-
     <script>
-        let currentItem = '', currentPrice = 0, selectedMethod = 'Cash on Delivery';
-
-        function openGallery(images) {
-            if(!images || images.length === 0) return;
-            const mainImg = document.getElementById('galleryMain');
-            const thumbBox = document.getElementById('thumbContainer');
-            mainImg.src = images[0];
-            thumbBox.innerHTML = '';
-
-            images.forEach((img, index) => {
-                const thumb = document.createElement('img');
-                thumb.src = img;
-                thumb.className = 'thumb-img' + (index === 0 ? ' active' : '');
-                thumb.onclick = () => {
-                    mainImg.src = img;
-                    document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
-                    thumb.classList.add('active');
-                };
-                thumbBox.appendChild(thumb);
-            });
-            document.getElementById('galleryModal').style.display = 'flex';
-        }
-        function closeGallery() { document.getElementById('galleryModal').style.display = 'none'; }
-
-                function addToCart(id, name, price, image) {
-            // Naya URL jo app.py se match karta hai
+        function addToCart(id) {
             fetch('/add-to-cart/' + id, {
                 method: 'POST',
                 headers: {
@@ -240,8 +113,8 @@
             })
             .catch(err => console.error("Error:", err));
         }
-        
     </script>
 </body>
-    </html>
+</html>
+
     
