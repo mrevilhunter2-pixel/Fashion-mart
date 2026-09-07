@@ -268,7 +268,7 @@ def cart():
     total = sum(int(item.get('price', 0)) for item in cart_items)
     return render_template('cart.html', cart_items=cart_items, total=total)
 
-@app.route('/add-to-cart/<int:product_id>')
+@app.route('/add-to-cart/<int:product_id>', methods=['GET', 'POST'])
 def add_to_cart(product_id):
     conn = get_db()
     cur = conn.cursor()
@@ -287,9 +287,13 @@ def add_to_cart(product_id):
         session['cart'] = cart
         session.modified = True
         
-    # User jahan tha, wahi wapas bhej dein
-    return redirect(request.referrer or '/')
+        # Agar request JavaScript (Fetch/AJAX) se aayi hai:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': True, 'cart_count': len(cart)})
 
+    # Agar simple link click kiya hai:
+    return redirect(request.referrer or '/')
+    
 @app.route('/remove-from-cart/<int:index>')
 def remove_from_cart(index):
     cart = session.get('cart', [])
