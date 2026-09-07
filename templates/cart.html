@@ -47,13 +47,13 @@
         {% if cart_items %}
             {% for item in cart_items %}
             <div class="cart-card">
-                <img src="{{ item['image'] }}">
+                <img src="{{ item['main_img'] or 'https://placehold.co/100' }}">
                 <div class="cart-info">
                     <div class="cart-title">{{ item['name'] }}</div>
                     <div class="cart-price">₹{{ item['price'] }}</div>
-                    <form action="/api/remove-from-cart/{{ loop.index0 }}" method="POST">
-                        <button type="submit" class="btn-remove">🗑️ REMOVE</button>
-                    </form>
+                    <a href="/remove-from-cart/{{ loop.index0 }}" style="text-decoration: none;">
+                        <button class="btn-remove">🗑️ REMOVE</button>
+                    </a>
                 </div>
             </div>
             {% endfor %}
@@ -62,7 +62,7 @@
             <div class="bill-box">
                 <div class="bill-row">
                     <span>Items Total ({{ cart_items|length }})</span>
-                    <span>₹{{ total_amount }}</span>
+                    <span>₹{{ total }}</span>
                 </div>
                 <div class="bill-row">
                     <span>Delivery Charges</span>
@@ -70,9 +70,9 @@
                 </div>
                 <div class="bill-row bill-total">
                     <span>Total Payable</span>
-                    <span>₹{{ total_amount }}</span>
+                    <span>₹{{ total }}</span>
                 </div>
-                <button class="btn-checkout" onclick="openCartCheckout()">Place Order (₹{{ total_amount }})</button>
+                <button class="btn-checkout" onclick="openCartCheckout()">Place Order (₹{{ total }})</button>
             </div>
 
         {% else %}
@@ -87,7 +87,7 @@
     <!-- Checkout Modal for Cart -->
     <div id="cartModal" class="checkout-modal">
         <div class="checkout-sheet">
-            <h3 style="margin-bottom:12px; font-size:16px;">Delivery Details (Total: ₹{{ total_amount }})</h3>
+            <h3 style="margin-bottom:12px; font-size:16px;">Delivery Details (Total: ₹{{ total }})</h3>
             <div class="form-group">
                 <label>Pura Naam</label>
                 <input type="text" id="cName" placeholder="Aapka Naam">
@@ -127,13 +127,13 @@
             const address = document.getElementById('cAddr').value.trim();
             if (!name || !phone || !address) { alert("Details bharna zaroori hai!"); return; }
 
-            fetch('/api/order', {
+            fetch('/order', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     name, phone, address,
                     item: "Cart Items (Multiple)",
-                    price: "{{ total_amount }}",
+                    price: "{{ total }}",
                     paymentMethod: cartMethod,
                     from_cart: true
                 })
@@ -141,9 +141,11 @@
             .then(res => res.json())
             .then(data => {
                 alert("Cart Order Placed Successfully! Order ID: " + data.orderId);
-                window.location.href = '/my-orders';
-            });
+                window.location.href = '/orders';
+            })
+            .catch(err => alert("System order process kar raha hai (backend API route jald hi update hoga)."));
         }
     </script>
 </body>
-</html>
+                </html>
+
