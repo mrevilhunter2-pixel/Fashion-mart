@@ -190,7 +190,8 @@ def add_category():
     return redirect('/admin')
 
 # Category Delete
-@app.route('/admin/category/delete/<int:cat_id>')
+@app.route('/admin/category/delete/<int:cat_id>', methods=['POST'])
+
 def delete_category(cat_id):
     if not session.get('admin_logged_in'):
         return redirect('/admin')
@@ -233,7 +234,8 @@ def add_product():
     return redirect('/admin')
 
 # Product Delete
-@app.route('/admin/product/delete/<int:prod_id>')
+@app.route('/admin/product/delete/<int:prod_id>', methods=['POST'])
+
 def delete_product(prod_id):
     if not session.get('admin_logged_in'):
         return redirect('/admin')
