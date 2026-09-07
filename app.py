@@ -12,7 +12,7 @@ cloudinary.config(
     api_secret = os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-# Database Selection: Render par Supabase PostgreSQL, Local me SQLite
+# Database Selection
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     DATABASE_URL = DATABASE_URL.strip()
@@ -57,7 +57,8 @@ def init_db():
             mrp INT,
             price INT,
             discount INT,
-            images TEXT
+            images TEXT,
+            sizes TEXT
         )''')
         cur.execute('''CREATE TABLE IF NOT EXISTS orders (
             id SERIAL PRIMARY KEY,
@@ -85,7 +86,8 @@ def init_db():
             mrp INTEGER,
             price INTEGER,
             discount INTEGER,
-            images TEXT
+            images TEXT,
+            sizes TEXT
         )''')
         cur.execute('''CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,6 +104,11 @@ def init_db():
         )''')
         
     conn.commit()
+    try:
+        cur.execute("ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT ''")
+        conn.commit()
+    except Exception:
+        pass
     conn.close()
 
 init_db()
@@ -162,7 +169,6 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect('/admin')
 
-# Category Add (Cloudinary Enabled)
 @app.route('/admin/category/add', methods=['POST'])
 def add_category():
     if not session.get('admin_logged_in'):
@@ -189,9 +195,7 @@ def add_category():
         
     return redirect('/admin')
 
-# Category Delete
 @app.route('/admin/category/delete/<int:cat_id>', methods=['POST'])
-
 def delete_category(cat_id):
     if not session.get('admin_logged_in'):
         return redirect('/admin')
@@ -203,7 +207,6 @@ def delete_category(cat_id):
     conn.close()
     return redirect('/admin')
 
-# Product Add (Cloudinary Enabled)
 @app.route('/admin/product/add', methods=['POST'])
 def add_product():
     if not session.get('admin_logged_in'):
@@ -214,6 +217,7 @@ def add_product():
     mrp = int(request.form.get('mrp', 0))
     price = int(request.form.get('price', 0))
     discount = int(((mrp - price) / mrp * 100)) if mrp > price else 0
+    sizes = request.form.get('sizes', '')
 
     uploaded_files = request.files.getlist('images')
     images = []
@@ -226,17 +230,14 @@ def add_product():
 
     conn = get_db()
     cur = conn.cursor()
-    placeholder = '%s, %s, %s, %s, %s, %s' if is_postgres else '?, ?, ?, ?, ?, ?'
-    cur.execute(f'''INSERT INTO products (name, category, mrp, price, discount, images)
-                    VALUES ({placeholder})''', (name, category, mrp, price, discount, images_str))
+    placeholder = '%s, %s, %s, %s, %s, %s, %s' if is_postgres else '?, ?, ?, ?, ?, ?, ?'
+    cur.execute(f'''INSERT INTO products (name, category, mrp, price, discount, images, sizes)
+                    VALUES ({placeholder})''', (name, category, mrp, price, discount, images_str, sizes))
     conn.commit()
     conn.close()
     return redirect('/admin')
-    
 
-# Product Delete
 @app.route('/admin/product/delete/<int:prod_id>', methods=['POST'])
-
 def delete_product(prod_id):
     if not session.get('admin_logged_in'):
         return redirect('/admin')
@@ -248,7 +249,6 @@ def delete_product(prod_id):
     conn.close()
     return redirect('/admin')
 
-# Order Status Update
 @app.route('/admin/order/update/<int:order_id>', methods=['POST'])
 def update_order(order_id):
     if not session.get('admin_logged_in'):
@@ -262,7 +262,6 @@ def update_order(order_id):
     conn.close()
     return redirect('/admin')
 
-# --- CART & USER ROUTES ---
 @app.route('/cart')
 def cart():
     cart_items = session.get('cart', [])
@@ -288,13 +287,11 @@ def add_to_cart(product_id):
         session['cart'] = cart
         session.modified = True
         
-        # Agar request JavaScript (Fetch/AJAX) se aayi hai:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
             return jsonify({'success': True, 'cart_count': len(cart)})
 
-    # Agar simple link click kiya hai:
     return redirect(request.referrer or '/')
-    
+
 @app.route('/remove-from-cart/<int:index>')
 def remove_from_cart(index):
     cart = session.get('cart', [])
@@ -306,20 +303,7 @@ def remove_from_cart(index):
 
 @app.route('/orders')
 def my_orders():
-    # User ke orders dikhane ke liye basic route
     return render_template('orders.html')
-
-@app.route('/setup-sizes')
-def setup_sizes():
-    conn = get_db()
-    cur = conn.cursor()
-    try:
-        cur.execute("ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT ''")
-        conn.commit()
-    except Exception as e:
-        pass # Agar column pehle se hai to error ignore karega
-    conn.close()
-    return "Size update successful! <a href='/admin'>Go to Admin</a>"
 
 @app.route('/product/<int:id>')
 def product_page(id):
@@ -327,7 +311,6 @@ def product_page(id):
     cur = conn.cursor()
     placeholder = '%s' if is_postgres else '?'
     
-    # Main Product
     cur.execute(f'SELECT * FROM products WHERE id = {placeholder}', (id,))
     prod = cur.fetchone()
     
@@ -339,7 +322,6 @@ def product_page(id):
     product['main_img'] = product['img_list'][0] if product['img_list'] else ''
     product['size_list'] = [s.strip() for s in (product.get('sizes') or '').split(',') if s.strip()]
 
-    # Related Products
     cur.execute(f'SELECT * FROM products WHERE category = {placeholder} AND id != {placeholder} LIMIT 4', (product['category'], id))
     related_db = cur.fetchall()
     
@@ -353,7 +335,7 @@ def product_page(id):
     conn.close()
     cart_count = len(session.get('cart', []))
     return render_template('product.html', product=product, related=related, cart_count=cart_count)
-    
+
 if __name__ == '__main__':
     app.run(debug=True)
-        
+    
