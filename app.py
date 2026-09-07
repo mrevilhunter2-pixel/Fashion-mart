@@ -307,6 +307,51 @@ def remove_from_cart(index):
 def my_orders():
     # User ke orders dikhane ke liye basic route
     return render_template('orders.html')
+
+@app.route('/setup-sizes')
+def setup_sizes():
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT ''")
+        conn.commit()
+    except Exception as e:
+        pass # Agar column pehle se hai to error ignore karega
+    conn.close()
+    return "Size update successful! <a href='/admin'>Go to Admin</a>"
+
+@app.route('/product/<int:id>')
+def product_page(id):
+    conn = get_db()
+    cur = conn.cursor()
+    placeholder = '%s' if is_postgres else '?'
+    
+    # Main Product
+    cur.execute(f'SELECT * FROM products WHERE id = {placeholder}', (id,))
+    prod = cur.fetchone()
+    
+    if not prod:
+        return "Product Not Found", 404
+        
+    product = dict(prod)
+    product['img_list'] = [img for img in (product.get('images') or '').split(',') if img]
+    product['main_img'] = product['img_list'][0] if product['img_list'] else ''
+    product['size_list'] = [s.strip() for s in (product.get('sizes') or '').split(',') if s.strip()]
+
+    # Related Products
+    cur.execute(f'SELECT * FROM products WHERE category = {placeholder} AND id != {placeholder} LIMIT 4', (product['category'], id))
+    related_db = cur.fetchall()
+    
+    related = []
+    for r in related_db:
+        ritem = dict(r)
+        r_imgs = [img for img in (ritem.get('images') or '').split(',') if img]
+        ritem['main_img'] = r_imgs[0] if r_imgs else ''
+        related.append(ritem)
+        
+    conn.close()
+    cart_count = len(session.get('cart', []))
+    return render_template('product.html', product=product, related=related, cart_count=cart_count)
     
 if __name__ == '__main__':
     app.run(debug=True)
