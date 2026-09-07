@@ -107,7 +107,7 @@
         <h1>Fashion Mart</h1>
         <div style="display: flex; gap: 8px;">
             <a href="/cart" class="btn-top" style="background:white; color:#2874f0;">🛒 (<span id="cartCount">{{ cart_count }}</span>)</a>
-            <a href="/my-orders" class="btn-top">Orders</a>
+            <a href="/orders" class="btn-top">Orders</a>
         </div>
     </header>
 
@@ -219,49 +219,25 @@
         }
         function closeGallery() { document.getElementById('galleryModal').style.display = 'none'; }
 
-        function addToCart(id, name, price, image) {
-            fetch('/api/add-to-cart', {
+                function addToCart(id, name, price, image) {
+            // Naya URL jo app.py se match karta hai
+            fetch('/add-to-cart/' + id, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, name, price, image })
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
             })
             .then(res => res.json())
             .then(data => {
-                document.getElementById('cartCount').innerText = data.cart_count;
-                alert("🛒 Product Cart mein add ho gaya!");
-            });
-        }
-
-        function openCheckout(item, price) {
-            currentItem = item;
-            currentPrice = price;
-            document.getElementById('itemLabel').innerText = `${item} - ₹${price}`;
-            document.getElementById('checkoutModal').style.display = 'flex';
-        }
-        function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; }
-        function selectPay(method) {
-            selectedMethod = method;
-            document.getElementById('optCOD').classList.toggle('active', method === 'Cash on Delivery');
-            document.getElementById('optUPI').classList.toggle('active', method === 'Online / UPI');
-        }
-
-        function submitOrder() {
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const address = document.getElementById('custAddr').value.trim();
-            if (!name || !phone || !address) { alert("Sabhi details bharein!"); return; }
-
-            fetch('/api/order', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name, phone, address, item: currentItem, price: currentPrice, paymentMethod: selectedMethod })
+                if(data.success) {
+                    document.getElementById('cartCount').innerText = data.cart_count;
+                    alert("🛒 Product Cart mein add ho gaya!");
+                }
             })
-            .then(res => res.json())
-            .then(data => {
-                alert(`Order Success! Order ID: ${data.orderId}`);
-                window.location.href = '/my-orders';
-            });
+            .catch(err => console.error("Error:", err));
         }
+        
     </script>
 </body>
     </html>
