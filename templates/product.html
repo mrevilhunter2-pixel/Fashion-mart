@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product['name'] }} - Fashion Mart</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, Roboto, sans-serif; }
+        body { background: #f1f2f4; color: #212121; padding-bottom: 60px; }
+        header { background: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10; }
+        .back-btn { text-decoration: none; color: #d32f2f; font-size: 18px; font-weight: bold; }
+        .header-icons a { margin-left: 15px; text-decoration: none; color: #d32f2f; font-size: 18px; }
+        
+        .main-img-box { background: white; text-align: center; padding: 10px; }
+        .main-img-box img { width: 100%; max-height: 400px; object-fit: contain; }
+        
+        .thumb-row { display: flex; gap: 10px; padding: 10px 15px; background: white; overflow-x: auto; }
+        .thumb-row img { width: 60px; height: 60px; border-radius: 4px; border: 1px solid #ddd; object-fit: cover; cursor: pointer; }
+        .thumb-row img.active { border: 2px solid #d32f2f; }
+
+        .details-box { background: white; padding: 15px; margin-top: 8px; }
+        .title { font-size: 16px; color: #555; margin-bottom: 8px; }
+        .price-row { display: flex; align-items: baseline; gap: 8px; }
+        .price { font-size: 22px; font-weight: bold; color: #212121; }
+        .mrp { font-size: 14px; color: #878787; text-decoration: line-through; }
+        .discount { font-size: 12px; color: white; background: #388e3c; padding: 2px 6px; border-radius: 2px; font-weight: bold; }
+        
+        /* Size Selection */
+        .size-box { background: white; padding: 15px; margin-top: 8px; }
+        .size-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; }
+        .size-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .size-btn { border: 1px solid #ccc; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; background: white; cursor: pointer; color: #333; }
+        .size-btn.active { border-color: #d32f2f; color: #d32f2f; background: #ffebee; font-weight: bold; }
+
+        /* Related Products */
+        .related-box { padding: 15px; }
+        .related-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .card { background: white; border-radius: 4px; overflow: hidden; padding-bottom: 8px; text-decoration: none; color: #212121; }
+        .card img { width: 100%; height: 160px; object-fit: cover; }
+        .card-body { padding: 8px; }
+        .card-price { font-weight: bold; font-size: 14px; margin-top: 5px; }
+        
+        /* Bottom Sticky Bar */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; background: white; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 100; }
+        .btn-add { flex: 1; padding: 15px; border: none; background: white; color: #d32f2f; font-weight: bold; font-size: 15px; border-top: 1px solid #ddd; cursor: pointer; }
+        .btn-buy { flex: 1; padding: 15px; border: none; background: #d32f2f; color: white; font-weight: bold; font-size: 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="/" class="back-btn">&larr;</a>
+        <div class="header-icons">
+            <a href="/cart">🛒 <span id="cartCount">{{ cart_count }}</span></a>
+        </div>
+    </header>
+
+    <!-- Images -->
+    <div class="main-img-box">
+        <img id="mainImg" src="{{ product['main_img'] or 'https://placehold.co/400' }}">
+    </div>
+    {% if product['img_list']|length > 1 %}
+    <div class="thumb-row">
+        {% for img in product['img_list'] %}
+        <img src="{{ img }}" class="thumb {% if loop.first %}active{% endif %}" onclick="changeImg(this, '{{ img }}')">
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Details -->
+    <div class="details-box">
+        <div class="title">{{ product['name'] }}</div>
+        <div class="price-row">
+            <span class="price">₹{{ product['price'] }}</span>
+            {% if product['mrp'] > product['price'] %}
+            <span class="mrp">₹{{ product['mrp'] }}</span>
+            <span class="discount">{{ product['discount'] }}% off</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sizes -->
+    {% if product['size_list'] %}
+    <div class="size-box">
+        <div class="size-title">Select Size</div>
+        <div class="size-row">
+            {% for s in product['size_list'] %}
+            <button class="size-btn" onclick="selectSize(this, '{{ s }}')">{{ s }}</button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Related Products -->
+    {% if related %}
+    <div class="related-box">
+        <div class="related-title">Similar Products</div>
+        <div class="grid">
+            {% for r in related %}
+            <a href="/product/{{ r['id'] }}" class="card">
+                <img src="{{ r['main_img'] or 'https://placehold.co/150' }}">
+                <div class="card-body">
+                    <div style="font-size:12px; color:#555; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r['name'] }}</div>
+                    <div class="card-price">₹{{ r['price'] }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bottom Action Bar -->
+    <div class="bottom-bar">
+        <button class="btn-add" onclick="addToCart('{{ product['id'] }}')">+ Add to Cart</button>
+        <button class="btn-buy" onclick="buyNow()">Buy Now</button>
+    </div>
+
+    <script>
+        let selectedSize = '';
+        let hasSizes = {{ 'true' if product['size_list'] else 'false' }};
+
+        function changeImg(element, src) {
+            document.getElementById('mainImg').src = src;
+            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function selectSize(element, size) {
+            selectedSize = size;
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function addToCart(id) {
+            if (hasSizes && !selectedSize) {
+                alert("Kripya pehle Size select karein!");
+                return;
+            }
+            
+            // Abhi ke liye purana route use kar rahe hain
+            fetch('/add-to-cart/' + id, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('cartCount').innerText = data.cart_count;
+                    alert("🛒 Product Cart mein add ho gaya!");
+                }
+            }).catch(err => console.error(err));
+        }
+
+        function buyNow() {
+            if (hasSizes && !selectedSize) {
+                alert("Kripya pehle Size select karein!");
+                return;
+            }
+            alert("Checkout function baad me setup karenge!");
+        }
+    </script>
+</body>
+</html>
