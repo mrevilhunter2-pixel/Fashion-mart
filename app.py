@@ -261,6 +261,49 @@ def update_order(order_id):
     conn.close()
     return redirect('/admin')
 
+# --- CART & USER ROUTES ---
+@app.route('/cart')
+def cart():
+    cart_items = session.get('cart', [])
+    total = sum(int(item.get('price', 0)) for item in cart_items)
+    return render_template('cart.html', cart_items=cart_items, total=total)
+
+@app.route('/add-to-cart/<int:product_id>')
+def add_to_cart(product_id):
+    conn = get_db()
+    cur = conn.cursor()
+    placeholder = '%s' if is_postgres else '?'
+    cur.execute(f'SELECT * FROM products WHERE id = {placeholder}', (product_id,))
+    product = cur.fetchone()
+    conn.close()
+
+    if product:
+        item = dict(product)
+        img_list = [img for img in (item.get('images') or '').split(',') if img]
+        item['main_img'] = img_list[0] if img_list else ''
+        
+        cart = session.get('cart', [])
+        cart.append(item)
+        session['cart'] = cart
+        session.modified = True
+        
+    # User jahan tha, wahi wapas bhej dein
+    return redirect(request.referrer or '/')
+
+@app.route('/remove-from-cart/<int:index>')
+def remove_from_cart(index):
+    cart = session.get('cart', [])
+    if 0 <= index < len(cart):
+        cart.pop(index)
+        session['cart'] = cart
+        session.modified = True
+    return redirect('/cart')
+
+@app.route('/orders')
+def my_orders():
+    # User ke orders dikhane ke liye basic route
+    return render_template('orders.html')
+    
 if __name__ == '__main__':
     app.run(debug=True)
         
