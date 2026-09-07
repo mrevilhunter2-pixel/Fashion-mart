@@ -214,7 +214,8 @@ def add_product():
     mrp = int(request.form.get('mrp', 0))
     price = int(request.form.get('price', 0))
     discount = int(((mrp - price) / mrp * 100)) if mrp > price else 0
-
+        sizes = request.form.get('sizes', '')
+    
     uploaded_files = request.files.getlist('images')
     images = []
     for f in uploaded_files[:4]:
@@ -226,9 +227,10 @@ def add_product():
 
     conn = get_db()
     cur = conn.cursor()
-    placeholder = '%s, %s, %s, %s, %s, %s' if is_postgres else '?, ?, ?, ?, ?, ?'
-    cur.execute(f'''INSERT INTO products (name, category, mrp, price, discount, images)
-                    VALUES ({placeholder})''', (name, category, mrp, price, discount, images_str))
+        placeholder = '%s, %s, %s, %s, %s, %s, %s' if is_postgres else '?, ?, ?, ?, ?, ?, ?'
+    cur.execute(f'''INSERT INTO products (name, category, mrp, price, discount, images, sizes)
+                    VALUES ({placeholder})''', (name, category, mrp, price, discount, images_str, sizes))
+
     conn.commit()
     conn.close()
     return redirect('/admin')
