@@ -125,8 +125,10 @@ def home():
     if cat == 'All':
         cur.execute('SELECT * FROM products ORDER BY id DESC')
     else:
+        # Yahan case-insensitive match (LOWER) laga diya hai taaki spelling ki galti na ho
         placeholder = '%s' if is_postgres else '?'
-        cur.execute(f'SELECT * FROM products WHERE category = {placeholder} ORDER BY id DESC', (cat,))
+        cur.execute(f'SELECT * FROM products WHERE LOWER(TRIM(category)) = LOWER(TRIM({placeholder})) ORDER BY id DESC', (cat,))
+        
     products = cur.fetchall()
     conn.close()
 
